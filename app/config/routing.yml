@@ -1,0 +1,20 @@
+cgi_comment:
+    resource: "@CGICommentBundle/Controller/"
+    type:     annotation
+    prefix:   /
+
+cgi_ged:
+    resource: "@CGIGedBundle/Controller/"
+    type:     annotation
+    prefix:   /
+
+app:
+    resource: '@AppBundle/Controller/'
+    type: annotation
+
+login_check:
+    path:   /login_check
+
+logout:
+    path:   /logout
+

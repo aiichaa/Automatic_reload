@@ -1,0 +1,39 @@
+# To get started with security, check out the documentation:
+# http://symfony.com/doc/current/security.html
+security:
+    providers:
+        administrators:
+            entity: { class: CGIGedBundle:TblUser, property: userLogin}
+
+    encoders:
+        CGI\GedBundle\Entity\TblUser: plaintext
+
+    firewalls:
+            dev:
+                pattern:  ^/(_(profiler|wdt)|css|images|js)/
+                security: false
+            login:
+                pattern:  ^/login$
+                security: false
+            mail:
+                pattern:  ^/mail
+                security: false
+            secured_area:
+                pattern: ^/
+                form_login:
+                    login_path:  /login
+                    check_path:  /login_check
+                    always_use_default_target_path: true
+                    default_target_path: /redirectUser
+                logout:
+                    path:   /logout
+                    target: /login
+    role_hierarchy:
+          #groupement de role
+          ROLE_ADMIN_CGI:
+            -ROLE_ADMIN_CGI_FORM
+          ROLE_SUPER_ADMIN:
+            - ROLE_ADMIN_CGI
+
+    access_decision_manager:
+            strategy: unanimous

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+
+    <title>{% block title %}Welcome!{% endblock %}</title>
+{% block stylesheets %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.15/css/jquery.dataTables.min.css">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">    <!-- drop zone-->
+
+    <link rel="stylesheet" href="https://rawgit.com/enyo/dropzone/master/dist/dropzone.css">
+
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.15/js/jquery.dataTables.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="{{ asset('js/dropzone.js') }}"></script>
+
+    <style>
+        /*Drop zone*/
+        .dropzone {
+            border: 2px dashed #0087F7;
+            border-radius: 5px;
+            background: white;
+            width:80%;
+            height:13px;
+            min-height: 0px !important;
+            text-align: inherit;
+        }
+    </style>
+{% endblock %}
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
+</head>
+<body>
+{% block body %}
+    <br>
+    <div class="panel panel-default">
+        <div class="panel-heading">Documents list</div>
+        <div class="panel-body">
+            <table class="table table-bordered table-striped" id="datatable">
+                <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Documentnom</th>
+                    <th>Add document</th>
+                    <th>Document</th>
+                    <th>Createdat</th>
+                    <th>Updatedat</th>
+                    <th>See document</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                {% for document in documents %}
+                    <tr>
+                        <td><a href="{{ path('document_show', { 'id': document.id }) }}">{{ document.id }}</a></td>
+                        <td>{{ document.documentNom }}</td>
+                        <td>
+                            <div class="dropzone my-dropzone" id="form_snippet_file_{{ document.id }}">
+                            </div>
+
+                            <script>
+
+                                $(document).ready(function () {
+                                    Dropzone.autoDiscover = false;
+                                    $("#form_snippet_file_"+"{{ document.id }}").dropzone({
+                                        url: "{{path('ajax_snippet_file_send')}}",
+                                        maxFiles: 1,
+                                        init: function() {
+                                            this.on("sending", function (file, xhr, formData) {
+                                                formData.append('documentId',{{ document.id }});
+                                                //progressbar
+                                                $('#myProgressBarModal').modal('show');
+                                                $('#myProgressBarModal').on('shown.bs.modal', function () {
+                                                    var progress = setInterval(function() {
+                                                        var $bar = $('.bar');
+                                                        if ($bar.width()==500) {
+                                                            clearInterval(progress);
+                                                            $('.progress').removeClass('active');
+                                                            $('#myProgressBarModal').modal('hide');
+                                                            $bar.width(0);
+
+                                                            //set file name in success message
+                                                            var $successMessage = $('#successMessage');
+                                                            $successMessage.text(file.name + " a été ajouté avec succes");
+                                                            //show modal
+                                                            $('#mySuccessMessageModal').modal('show');
+                                                            // Set a timeout to hide the element again
+                                                            setTimeout(function(){
+                                                                $("#mySuccessMessageModal").modal('hide');
+                                                            }, 2000);
+
+                                                        } else {
+                                                            // perform processing logic here
+                                                            $bar.width($bar.width()+250); // it was 100
+                                                        }
+                                                        //$bar.text($bar.width()/5 + "%");
+                                                    }, 800);
+                                                })
+                                            })},
+                                        success: function (file, response) {
+                                            file.previewElement.classList.add("dz-success");
+                                            //console.log(file.name);
+                                        },
+                                        error: function (file, response) {
+                                            file.previewElement.classList.add("dz-error");
+                                            //set respinse in fail message
+                                            var $failMessage = $('#failMessage');
+                                            $failMessage.text(response);
+                                            //show modal
+                                            $('#myFailMessageModal').modal('show');
+                                            // Set a timeout to hide the element again
+                                            setTimeout(function(){
+                                                $("#myFailMessageModal").modal('hide');
+                                            }, 2000);
+                                        }
+                                    });
+                                });
+
+                            </script>
+                        </td>
+
+                        <td>{{ document.document }}</td>
+                        <td>{% if document.createdAt %}{{ document.createdAt|date('Y-m-d H:i:s') }}{% endif %}</td>
+                        <td>{% if document.updatedAt %}{{ document.updatedAt|date('Y-m-d H:i:s') }}{% endif %}</td>
+                        <td>
+                            <a href="{{ asset('uploads/simulationDocuments/' ~ document.documentNom) }}" target="_blank" class="eye" ><i class="fa fa-file-image-o" style="font-size:36px"></i></a>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>
+                                    <a href="{{ path('document_show', { 'id': document.id }) }}">show</a>
+                                </li>
+                                <li>
+                                    <a href="{{ path('document_edit', { 'id': document.id }) }}">edit</a>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="myProgressBarModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!--<div class="modal-header">
+                  <h4 class="modal-title" id="myModalLabel"><i class="fa fa-clock-o"></i> Download</h4>
+                </div> -->
+                <div class="modal-body center-block">
+                    <p>Veuillez patienter ... </p>
+                    <div class="progress">
+                        <div class="progress-bar bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+
+    <!-- Modal For success Message-->
+    <div class="modal fade" id="mySuccessMessageModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body center-block">
+                    <p id="successMessage"></p>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <!-- Modal For fail Message-->
+    <div class="modal fade" id="myFailMessageModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body center-block">
+                    <p id="failMessage"></p>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+
+
+    <ul>
+        <li>
+            <a href="{{ path('document_new') }}">Create a new document</a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.15/js/jquery.dataTables.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="{{ asset('js/dropzone.js') }}"></script>
+
+    <script>
+        function filterGlobal () {
+            $('#datatable').DataTable().search(
+                    $('#global_filter').val()
+            ).draw();
+        }
+
+        function filterColumn ( i ) {
+            $('#datatable').DataTable().column( i ).search(
+                    $('#col'+i+'_filter').val()
+            ).draw();
+        }
+
+        $(document).ready(function(){
+            var table = $('#datatable').DataTable({
+                "order": [[ 0, "desc" ]],
+                "paging": true,
+                "lengthChange": false,
+                "searching": true,
+//                scrollX:        true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": true
+            });
+            $('input.global_filter').on( 'keyup click', function () {
+                filterGlobal();
+            } );
+
+            $('input.column_filter').on( 'keyup click', function () {
+                filterColumn( $(this).parents('tr').attr('data-column') );
+            } );
+
+            $(".table").delegate("tbody>tr", "click", function(e) {
+                var id = $(this).attr('id');
+                window.location.href = Routing.generate('detail_dossier',{id:id})
+            })
+        });
+
+    </script>
+
+{% endblock %}
+</body>
+</html>
+
